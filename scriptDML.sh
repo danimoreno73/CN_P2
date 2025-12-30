@@ -22,7 +22,7 @@ aws kinesis create-stream --stream-name airports-stream --shard-count 1
 # Lambda
 
 aws lambda create-function --function-name airports-firehose-lambda --runtime python3.12 --role $env:ROLE_ARN --handler firehoseDML.lambda_handler --zip-file fileb://firehoseDML.zip --timeout 60 --memory-size 128
-aws lambda update-function-code --function-name airports-firehose-lambda --zip-file fileb://firehoseDML.zip 
+
 
 
 $env:LAMBDA_ARN=(aws lambda get-function --function-name airports-firehose-lambda --query 'Configuration.FunctionArn' --output text)
@@ -36,7 +36,9 @@ aws glue create-database --database-input '{\"Name\": \"airports_db\"}'
 
 #Crawler
 aws glue create-crawler --name airports-raw-crawler --role $env:ROLE_ARN --database-name airports_db --targets ('{\"S3Targets\": [{\"Path\": \"s3://' + $env:BUCKET_NAME + '/raw/\"}]}')
+aws glue create-crawler --name airports-processed-crawler --role $env:ROLE_ARN --database-name airports_db --targets ('{\"S3Targets\": [{\"Path\": \"s3://' + $env:BUCKET_NAME + '/processed/airports_daily/\"}, {\"Path\": \"s3://' + $env:BUCKET_NAME + '/processed/airports_monthly/\"}]}')
 
+aws glue start-crawler --name airports-processed-crawler
 aws glue start-crawler --name airports-raw-crawler
 
 #Script para crear el Job
